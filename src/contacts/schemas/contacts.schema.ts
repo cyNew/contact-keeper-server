@@ -20,7 +20,7 @@ export class Contact {
   type: string;
 
   @Prop({ default: Date.now() })
-  date: mongoose.Schema.Types.Date;
+  date: Date;
 }
 
 export type ContactDocument = Contact & mongoose.Document;
