@@ -1,15 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User, UserDocument } from './schemas/users.schema';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<void> {
+  async createUser(createUserDto: CreateUserDto) {
     const { name, password, email } = createUserDto;
 
     if (await this.checkExists(email)) {
@@ -29,9 +29,30 @@ export class UsersService {
     user.password = await bcrypt.hash(password, user.salt);
 
     user.save();
+
+    return user;
   }
 
-  async checkExists(email: string): Promise<boolean> {
+  async findUserByName(email: string) {
+    const user = await this.userModel.findOne({ email });
+    if (user) {
+      return user;
+    }
+
+    return null;
+  }
+
+  async findUserById(userId: string) {
+    const user = await this.userModel.findById(userId);
+
+    if (user) {
+      return user;
+    }
+
+    return null;
+  }
+
+  async checkExists(email: string) {
     const user = await this.userModel.findOne({ email });
     if (user) {
       return true;

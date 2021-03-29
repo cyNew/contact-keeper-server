@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ContactsController } from './contacts.controller';
+import { ContactsService } from './contacts.service';
 import { Contact, ContactSchema } from './schemas/contacts.schema';
 
 @Module({
@@ -13,5 +14,6 @@ import { Contact, ContactSchema } from './schemas/contacts.schema';
     ]),
   ],
   controllers: [ContactsController],
+  providers: [ContactsService],
 })
 export class ContactsModule {}
