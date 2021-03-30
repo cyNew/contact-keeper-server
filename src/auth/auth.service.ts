@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { UserDocument } from 'src/users/schemas/users.schema';
 import { UsersService } from 'src/users/users.service';
+import { JwtPayload, Payload } from './auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -11,36 +13,40 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string) {
-    const user = await this.usersService.findUserByName(email);
+  async validateUser(email: string, password: string): Promise<Payload> {
+    const user = await this.usersService.findUserByEmail(email);
 
-    if (user && user.password === (await bcrypt.hash(password, user.salt))) {
+    if (!user) {
+      throw new UnauthorizedException('Cannot find this email!');
+    }
+
+    if (user && (await this.isMatched(user, password))) {
       const { email, name, _id } = user;
 
       return { email, name, userId: _id };
+    } else {
+      throw new UnauthorizedException('The password is wrong!');
     }
-
-    return null;
   }
 
-  async login(user) {
-    const payload = {
+  login(user: Payload) {
+    const payload: JwtPayload = {
       sub: user.userId,
+      email: user.email,
       name: user.name,
     };
 
     return {
-      // 返回 JWT 到响应体中
       access_token: this.jwtService.sign(payload),
     };
   }
 
   async register(createUserDto: CreateUserDto) {
-    const { name, email, _id: userId } = await this.usersService.createUser(
+    const { name, email, userId } = await this.usersService.createUser(
       createUserDto,
     );
 
-    return await this.login({
+    return this.login({
       name,
       email,
       userId,
@@ -48,6 +54,11 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
-    return this.usersService.findUserById(userId);
+    const { email, name, _id } = await this.usersService.findUserById(userId);
+    return { email, name, _id };
+  }
+
+  protected async isMatched(user: UserDocument, password: string) {
+    return user.password === (await bcrypt.hash(password, user.salt));
   }
 }

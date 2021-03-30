@@ -16,7 +16,7 @@ export class UsersService {
       throw new HttpException(
         {
           status: HttpStatus.NOT_ACCEPTABLE,
-          message: 'This email does exists',
+          message: 'This email already exists',
         },
         HttpStatus.NOT_ACCEPTABLE,
       );
@@ -28,12 +28,12 @@ export class UsersService {
     user.salt = await bcrypt.genSalt();
     user.password = await bcrypt.hash(password, user.salt);
 
-    user.save();
+    await user.save();
 
-    return user;
+    return { name, email, userId: user._id };
   }
 
-  async findUserByName(email: string) {
+  async findUserByEmail(email: string) {
     const user = await this.userModel.findOne({ email });
     if (user) {
       return user;
@@ -54,10 +54,6 @@ export class UsersService {
 
   async checkExists(email: string) {
     const user = await this.userModel.findOne({ email });
-    if (user) {
-      return true;
-    }
-
-    return false;
+    return !!user;
   }
 }

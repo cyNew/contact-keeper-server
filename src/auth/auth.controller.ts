@@ -10,6 +10,7 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { AuthRequest } from './auth.interface';
 
 @Controller('api/auth')
 export class AuthController {
@@ -17,7 +18,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req) {
+  async login(@Request() req: AuthRequest) {
     return this.authService.login(req.user);
   }
 
@@ -28,7 +29,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getProfile(@Request() req) {
+  async getProfile(@Request() req: AuthRequest) {
     return this.authService.getProfile(req.user.userId);
   }
 }

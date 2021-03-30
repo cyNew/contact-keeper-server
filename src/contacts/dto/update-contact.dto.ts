@@ -1,5 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
-import { ContactType } from './create-contact.dto';
+import { IsEmail, IsIn, IsOptional, IsString } from 'class-validator';
 
 export class UpdateContactDto {
   @IsString()
@@ -14,7 +13,7 @@ export class UpdateContactDto {
   @IsOptional()
   phone: string;
 
-  @IsEnum(ContactType)
+  @IsIn(['personal', 'professional'])
   @IsOptional()
-  type: ContactType;
+  type: string;
 }

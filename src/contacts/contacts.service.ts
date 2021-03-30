@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -11,8 +15,8 @@ export class ContactsService {
     @InjectModel(Contact.name) private contactModel: Model<ContactDocument>,
   ) {}
 
-  async getAllContacts(userId: any) {
-    return await this.contactModel.find({ user: userId }).exec();
+  async getAllContacts(userId: string) {
+    return await this.contactModel.find({ user: userId as any }).exec();
   }
 
   async createContact(createContactDto: CreateContactDto, userId: string) {
@@ -26,8 +30,22 @@ export class ContactsService {
     return newContact;
   }
 
-  async updateContact(updateContactDto: UpdateContactDto, contactId: string) {
-    return await this.contactModel.findByIdAndUpdate(
+  async updateContact(
+    updateContactDto: UpdateContactDto,
+    contactId: string,
+    userId: string,
+  ) {
+    const contact = await this.contactModel.findById(contactId);
+
+    if (!contact) {
+      throw new NotFoundException('This contact does not exist!');
+    }
+
+    if (!this.isMatched(contact, userId)) {
+      throw new UnauthorizedException('This contact does not belong to you!');
+    }
+
+    return this.contactModel.findByIdAndUpdate(
       contactId,
       {
         $set: updateContactDto,
@@ -36,7 +54,21 @@ export class ContactsService {
     );
   }
 
-  async deleteOneContact(contactId: string) {
-    return await this.contactModel.findByIdAndRemove(contactId);
+  async deleteOneContact(contactId: string, userId: string) {
+    const contact = await this.contactModel.findById(contactId);
+
+    if (!contact) {
+      throw new NotFoundException('This contact does not exist!');
+    }
+
+    if (!this.isMatched(contact, userId)) {
+      throw new UnauthorizedException('This contact does not belong to you!');
+    }
+
+    return this.contactModel.findByIdAndRemove(contactId);
+  }
+
+  protected isMatched(contact: ContactDocument, userId: string) {
+    return contact.user.toString() === userId;
   }
 }

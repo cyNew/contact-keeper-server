@@ -1,10 +1,5 @@
 import { IsEmail, IsIn, IsString } from 'class-validator';
 
-export enum ContactType {
-  PERSONAL = 'personal',
-  PROFESSIONAL = 'professional',
-}
-
 export class CreateContactDto {
   @IsString()
   name: string;
@@ -16,5 +11,5 @@ export class CreateContactDto {
   phone: string;
 
   @IsIn(['personal', 'professional'])
-  type: ContactType;
+  type: string;
 }
